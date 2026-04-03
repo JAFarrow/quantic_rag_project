@@ -23,6 +23,36 @@ LLM-powered chatbot foundation with room for a policy-aware RAG stack.
     uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
     ```
 
+## Chat API
+
+The API includes a retrieval-augmented chat endpoint at `POST /api/chat`.
+
+Set these environment variables before running the server:
+
+```bash
+export OPENAI_API_KEY="your-openai-key"
+export PINECONE_API_KEY="your-pinecone-key"
+export PINECONE_INDEX_NAME="your-index-name"
+export PINECONE_NAMESPACE="dev/test/prod"
+```
+
+Optional tuning variables:
+
+```bash
+export OPENAI_CHAT_MODEL="gpt-4o-mini"
+export OPENAI_EMBEDDING_MODEL="text-embedding-3-small"
+export CHAT_TOP_K="4"
+export CHAT_MIN_SCORE="0.0"
+```
+
+Example request:
+
+```bash
+curl -X POST "http://localhost:8000/api/chat" \
+  -H "Content-Type: application/json" \
+  -d '{"question":"What does the policy say about late fees?"}'
+```
+
 ## Document ingestion
 
 The repository includes a CLI ingestion pipeline that:
