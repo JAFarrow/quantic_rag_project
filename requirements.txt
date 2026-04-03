@@ -1,2 +1,9 @@
 fastapi[all]==0.135.3
 uvicorn[standard]==0.42.0
+langchain==0.3.27
+langchain-community==0.3.29
+langchain-openai==0.3.33
+langchain-pinecone==0.2.13
+pinecone==7.3.0
+pypdf==6.1.1
+python-dotenv==1.1.1
