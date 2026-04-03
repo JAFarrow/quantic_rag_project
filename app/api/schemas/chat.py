@@ -5,11 +5,12 @@ class ChatRequest(BaseModel):
     question: str = Field(..., min_length=1)
 
 
-class ChatSource(BaseModel):
+class ChatCitation(BaseModel):
+    id: int
     source: str
-    page: int | None = None
+    page: int | str | None = None
 
 
 class ChatResponse(BaseModel):
     answer: str
-    sources: list[ChatSource] = Field(default_factory=list)
+    citations: list[ChatCitation] = Field(default_factory=list)

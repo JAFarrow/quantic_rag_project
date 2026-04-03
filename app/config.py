@@ -50,7 +50,7 @@ class ChatSettings:
             openai_api_key=_require("OPENAI_API_KEY"),
             pinecone_api_key=_require("PINECONE_API_KEY"),
             pinecone_index_name=_require("PINECONE_INDEX_NAME"),
-            pinecone_namespace=os.getenv("PINECONE_NAMESPACE", "default"),
+            pinecone_namespace=os.getenv("PINECONE_NAMESPACE", "dev"),
             openai_chat_model=os.getenv("OPENAI_CHAT_MODEL", "gpt-5.4-mini"),
             openai_embedding_model=os.getenv("OPENAI_EMBEDDING_MODEL", "text-embedding-3-small"),
             chat_top_k=_read_int("CHAT_TOP_K", 4),

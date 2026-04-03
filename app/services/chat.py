@@ -1,91 +1,25 @@
 from __future__ import annotations
 
-from langchain_core.documents import Document
-from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_core.output_parsers import StrOutputParser
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_core.runnables import RunnableLambda, RunnableParallel, RunnablePassthrough
 from langchain_openai import ChatOpenAI, OpenAIEmbeddings
 from langchain_pinecone import PineconeVectorStore
 
 from app.config import ChatSettings
+from app.services.chat_helpers import (
+    CITATION_RETRY_PROMPT_TEMPLATE,
+    SYSTEM_PROMPT,
+    USER_PROMPT_TEMPLATE,
+    build_chain_payload,
+    build_retry_payload,
+    extract_citation_ids,
+    filter_citations_by_answer,
+    serialize_citations,
+)
 
 
-SYSTEM_PROMPT = """
-You are a policy question-answering assistant.
-
-You must answer using only the provided context.
-Do not use outside knowledge.
-Do not guess, infer, or invent policy details that are not explicitly supported by the context.
-
-Requirements:
-1. Give a concise, accurate answer to the user's question.
-2. If the context is insufficient, say that the answer is not available in the provided documents.
-3. If the provided context appears to conflict, briefly note that the documents conflict.
-
-Output rules:
-- Write in plain language.
-- Keep the answer short unless the question clearly requires a list.
-- Do not include citations, source names, page numbers, or reference markers in the answer.
-""".strip()
-
-
-def _build_context(documents: list[Document]) -> str:
-    context_sections: list[str] = []
-
-    for document in documents:
-        content = document.page_content.strip()
-        if content:
-            context_sections.append(content)
-
-    return "\n\n".join(context_sections)
-
-
-def _extract_sources(documents: list[Document]) -> list[dict[str, int | str | None]]:
-    seen: set[tuple[str, str | int | None]] = set()
-    sources: list[dict[str, int | str | None]] = []
-
-    for document in documents:
-        metadata = document.metadata or {}
-        source = str(metadata.get("filename") or metadata.get("source") or "unknown")
-        page = metadata.get("page_label") or metadata.get("page")
-
-        key = (source, page)
-        if key in seen:
-            continue
-
-        seen.add(key)
-        sources.append(
-            {
-                "source": source,
-                "page": page,
-            }
-        )
-
-    return sources
-
-
-def _message_content_to_text(content: object) -> str:
-    if isinstance(content, str):
-        return content.strip()
-
-    if isinstance(content, list):
-        text_parts = [part.get("text", "") for part in content if isinstance(part, dict)]
-        return "\n".join(part for part in text_parts if part).strip()
-
-    return str(content).strip()
-
-
-def _build_user_prompt(question: str, context: str) -> str:
-    return f"""Answer the question using only the context below.
-
-Question:
-{question}
-
-Context:
-{context}
-
-Return only the answer."""
-
-
-def answer_question(question: str, settings: ChatSettings) -> tuple[str, list[dict[str, int | str | None]]]:
+def _build_rag_chain(settings: ChatSettings):
     embeddings = OpenAIEmbeddings(
         model=settings.openai_embedding_model,
         api_key=settings.openai_api_key,
@@ -98,29 +32,13 @@ def answer_question(question: str, settings: ChatSettings) -> tuple[str, list[di
         namespace=settings.pinecone_namespace,
     )
 
-    results = vector_store.similarity_search_with_score(
-        query=question,
-        k=settings.chat_top_k,
+    retriever = vector_store.as_retriever(
+        search_type="similarity_score_threshold",
+        search_kwargs={
+            "k": settings.chat_top_k,
+            "score_threshold": settings.chat_min_score,
+        },
     )
-
-    if not results:
-        return (
-            "I couldn't find enough information in the provided policy documents to answer that question.",
-            [],
-        )
-
-    MIN_SCORE = settings.chat_min_score
-    filtered_results = [(doc, score) for doc, score in results if score >= MIN_SCORE]
-    documents = [doc for doc, _score in filtered_results]
-
-    if not documents:
-        return (
-            "I couldn't find enough relevant information in the provided policy documents to answer that question.",
-            [],
-        )
-
-    sources = _extract_sources(documents)
-    context = _build_context(documents)
 
     llm = ChatOpenAI(
         model=settings.openai_chat_model,
@@ -128,12 +46,72 @@ def answer_question(question: str, settings: ChatSettings) -> tuple[str, list[di
         temperature=0,
     )
 
-    response = llm.invoke(
+    answer_prompt = ChatPromptTemplate.from_messages(
         [
-            SystemMessage(content=SYSTEM_PROMPT),
-            HumanMessage(content=_build_user_prompt(question, context)),
+            ("system", SYSTEM_PROMPT),
+            ("human", USER_PROMPT_TEMPLATE),
         ]
     )
 
-    answer = _message_content_to_text(response.content)
-    return answer, sources
+    answer_chain = answer_prompt | llm | StrOutputParser()
+
+    rag_chain = (
+        RunnableParallel(
+            question=RunnablePassthrough(),
+            documents=retriever,
+        )
+        | RunnableLambda(build_chain_payload)
+        | RunnableParallel(
+            question=RunnableLambda(lambda payload: payload["question"]),
+            context=RunnableLambda(lambda payload: payload["context"]),
+            citations=RunnableLambda(lambda payload: payload["citations"]),
+            answer=answer_chain,
+        )
+    )
+
+    citation_retry_prompt = ChatPromptTemplate.from_messages(
+        [
+            ("system", SYSTEM_PROMPT),
+            ("human", CITATION_RETRY_PROMPT_TEMPLATE),
+        ]
+    )
+
+    citation_retry_chain = (
+        RunnableLambda(build_retry_payload)
+        | citation_retry_prompt
+        | llm
+        | StrOutputParser()
+    )
+
+    return rag_chain, citation_retry_chain
+
+
+def answer_question(
+    question: str,
+    settings: ChatSettings,
+) -> tuple[str, list[dict[str, int | str | None]]]:
+    rag_chain, citation_retry_chain = _build_rag_chain(settings)
+
+    chain_result = rag_chain.invoke(question)
+    citations = list(chain_result.get("citations") or [])
+    answer = str(chain_result.get("answer") or "").strip()
+
+    if not citations:
+        return (
+            "I couldn't find enough relevant information in the provided policy documents to answer that question.",
+            [],
+        )
+
+    if citations and not extract_citation_ids(answer):
+        answer = citation_retry_chain.invoke(
+            {
+                "question": question,
+                "context": str(chain_result.get("context") or ""),
+                "draft_answer": answer,
+            }
+        )
+
+    cited_chunks = filter_citations_by_answer(answer, citations)
+    serialized_citations = serialize_citations(cited_chunks)
+
+    return answer, serialized_citations

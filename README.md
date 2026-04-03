@@ -39,7 +39,7 @@ export PINECONE_NAMESPACE="dev/test/prod"
 Optional tuning variables:
 
 ```bash
-export OPENAI_CHAT_MODEL="gpt-4o-mini"
+export OPENAI_CHAT_MODEL="gpt-5.4-mini"
 export OPENAI_EMBEDDING_MODEL="text-embedding-3-small"
 export CHAT_TOP_K="4"
 export CHAT_MIN_SCORE="0.0"
@@ -51,6 +51,21 @@ Example request:
 curl -X POST "http://localhost:8000/api/chat" \
   -H "Content-Type: application/json" \
   -d '{"question":"What does the policy say about late fees?"}'
+```
+
+Example response:
+
+```json
+{
+  "answer": "Late fees are capped at 5% of the outstanding balance [1].",
+  "citations": [
+    {
+      "id": 1,
+      "source": "policy-handbook.pdf",
+      "page": 12,
+    }
+  ]
+}
 ```
 
 ## Document ingestion
