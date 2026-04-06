@@ -6,16 +6,32 @@
     <title>Quantic RAG Chat</title>
     <style>
       :root {
-        color-scheme: light;
-        --bg-top: #f8f3e7;
-        --bg-bottom: #d5e6f0;
-        --panel: rgba(255, 255, 255, 0.78);
-        --panel-border: rgba(58, 76, 103, 0.25);
-        --ink: #13293d;
-        --muted: #39556e;
-        --accent: #b2522d;
-        --accent-strong: #913d1e;
-        --success: #1f6f43;
+        color-scheme: dark;
+        --bg-0: #090a0d;
+        --bg-1: #0f1116;
+        --surface-0: rgba(21, 24, 31, 0.88);
+        --surface-1: rgba(17, 20, 27, 0.95);
+        --surface-2: rgba(28, 33, 41, 0.84);
+        --border-subtle: rgba(164, 176, 196, 0.2);
+        --border-strong: rgba(164, 176, 196, 0.35);
+        --ink-strong: #eef3ff;
+        --ink: #d4dceb;
+        --ink-soft: #9da9bf;
+        --accent: #58d9eb;
+        --accent-strong: #2ab6cb;
+        --success: #68d8a3;
+        --danger: #ff908f;
+        --radius-sm: 0.6rem;
+        --radius-md: 0.95rem;
+        --radius-lg: 1.35rem;
+        --space-2: 0.5rem;
+        --space-3: 0.75rem;
+        --space-4: 1rem;
+        --space-5: 1.25rem;
+        --space-6: 1.5rem;
+        --space-8: 2rem;
+        --shadow-soft: 0 22px 48px rgba(0, 0, 0, 0.5);
+        --transition-fast: 170ms ease;
       }
 
       * {
@@ -26,168 +42,304 @@
         margin: 0;
         min-height: 100vh;
         background:
-          radial-gradient(circle at 15% 10%, rgba(255, 220, 175, 0.65), transparent 40%),
-          radial-gradient(circle at 85% 90%, rgba(158, 205, 235, 0.6), transparent 45%),
-          linear-gradient(160deg, var(--bg-top), var(--bg-bottom));
+          radial-gradient(circle at 14% 10%, rgba(88, 217, 235, 0.12), transparent 45%),
+          radial-gradient(circle at 84% 92%, rgba(106, 125, 149, 0.15), transparent 50%),
+          linear-gradient(168deg, var(--bg-0), var(--bg-1));
         color: var(--ink);
-        font-family: "IBM Plex Sans", "Segoe UI", Tahoma, sans-serif;
+        font-family: "IBM Plex Sans", "Avenir Next", "Segoe UI", sans-serif;
         display: grid;
         place-items: center;
-        padding: 2rem 1rem;
+        padding: var(--space-8) var(--space-4);
+      }
+
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        background-image:
+          linear-gradient(rgba(157, 169, 191, 0.06) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(157, 169, 191, 0.06) 1px, transparent 1px);
+        background-size: 32px 32px;
+        mask-image: radial-gradient(circle at center, black 20%, transparent 85%);
+        pointer-events: none;
       }
 
       main {
-        width: min(56rem, 100%);
-        background: var(--panel);
-        border: 1px solid var(--panel-border);
-        border-radius: 1rem;
-        backdrop-filter: blur(4px);
-        box-shadow: 0 22px 45px rgba(20, 33, 52, 0.2);
-        padding: clamp(1rem, 2vw + 0.5rem, 2rem);
+        width: min(58rem, 100%);
+        position: relative;
+        z-index: 1;
+        border-radius: var(--radius-lg);
+        border: 1px solid var(--border-subtle);
+        background: linear-gradient(155deg, var(--surface-0), var(--surface-1));
+        box-shadow: var(--shadow-soft);
+        padding: clamp(var(--space-5), 2.2vw + 0.65rem, 2.35rem);
+        display: grid;
+        gap: var(--space-6);
+        animation: rise-in 420ms ease-out both;
+      }
+
+      .hero {
+        display: grid;
+        gap: var(--space-2);
       }
 
       h1 {
         margin: 0;
-        font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Palatino, serif;
-        font-size: clamp(1.8rem, 2.2vw + 1rem, 2.6rem);
+        color: var(--ink-strong);
+        font-size: clamp(1.85rem, 2.1vw + 1.1rem, 2.8rem);
+        line-height: 1.1;
       }
 
-      p.lead {
-        margin: 0.55rem 0 1.25rem;
-        color: var(--muted);
-        line-height: 1.5;
+      .lead {
+        margin: 0;
+        color: var(--ink-soft);
+        line-height: 1.55;
+      }
+
+      .panel {
+        border-radius: var(--radius-md);
+        border: 1px solid var(--border-subtle);
+        background: linear-gradient(165deg, rgba(20, 24, 31, 0.86), rgba(14, 18, 23, 0.98));
+        padding: var(--space-5);
       }
 
       form {
         display: grid;
-        gap: 0.75rem;
+        gap: var(--space-3);
       }
 
       label {
+        color: var(--ink-strong);
         font-weight: 600;
       }
 
       textarea {
         width: 100%;
-        min-height: 7.5rem;
+        min-height: 8.2rem;
         resize: vertical;
-        border: 1px solid rgba(35, 56, 78, 0.25);
-        border-radius: 0.7rem;
-        padding: 0.85rem 0.95rem;
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--border-subtle);
+        background: var(--surface-2);
+        color: var(--ink-strong);
+        padding: 0.9rem 1rem;
         font: inherit;
-        color: var(--ink);
-        background: rgba(255, 255, 255, 0.92);
-        transition: border-color 160ms ease;
+        line-height: 1.55;
+        transition: border-color var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-fast);
       }
 
-      textarea:focus {
+      textarea::placeholder {
+        color: rgba(212, 220, 235, 0.5);
+      }
+
+      textarea:focus-visible {
         outline: none;
-        border-color: var(--accent);
-        box-shadow: 0 0 0 3px rgba(178, 82, 45, 0.18);
+        border-color: rgba(88, 217, 235, 0.95);
+        box-shadow: 0 0 0 3px rgba(88, 217, 235, 0.25);
+        background: rgba(35, 42, 52, 0.92);
       }
 
       .actions {
         display: flex;
         align-items: center;
-        gap: 0.85rem;
+        gap: var(--space-3);
         flex-wrap: wrap;
       }
 
       button {
-        border: 0;
+        border: 1px solid rgba(88, 217, 235, 0.35);
         border-radius: 999px;
-        padding: 0.7rem 1.25rem;
-        background: linear-gradient(140deg, var(--accent), var(--accent-strong));
-        color: #fff;
-        font-weight: 600;
+        padding: 0.7rem 1.3rem;
         font: inherit;
+        font-weight: 600;
+        color: var(--ink-strong);
+        background: linear-gradient(150deg, rgba(88, 217, 235, 0.2), rgba(24, 38, 51, 0.9));
         cursor: pointer;
+        transition: transform var(--transition-fast), border-color var(--transition-fast), background var(--transition-fast);
+      }
+
+      button:hover {
+        transform: translateY(-1px);
+        border-color: rgba(88, 217, 235, 0.75);
+      }
+
+      button:focus-visible {
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(88, 217, 235, 0.28);
       }
 
       button:disabled {
-        opacity: 0.65;
         cursor: wait;
+        opacity: 0.72;
+        transform: none;
       }
 
       .status {
-        color: var(--muted);
-        min-height: 1.25rem;
+        min-height: 1.2rem;
+        color: var(--ink-soft);
+        font-family: "IBM Plex Mono", "JetBrains Mono", monospace;
+        font-size: 0.9rem;
+        transition: color var(--transition-fast), background var(--transition-fast);
       }
 
-      section#result {
-        margin-top: 1.35rem;
-        border-top: 1px solid rgba(35, 56, 78, 0.2);
-        padding-top: 1.2rem;
+      #result {
+        display: grid;
+        gap: var(--space-5);
       }
 
-      section[hidden] {
+      #result[hidden] {
         display: none;
       }
 
-      .answer {
-        line-height: 1.65;
-        white-space: pre-wrap;
+      .result-block {
+        display: grid;
+        gap: var(--space-3);
       }
 
       h2 {
-        margin: 0.15rem 0 0.5rem;
-        font-size: 1.05rem;
-      }
-
-      ul {
         margin: 0;
-        padding-left: 1.1rem;
+        color: var(--ink-strong);
+        font-size: 1rem;
+        letter-spacing: 0.03em;
+        text-transform: uppercase;
       }
 
-      li {
-        margin: 0.35rem 0;
+      .answer {
+        margin: 0;
+        white-space: pre-wrap;
+        line-height: 1.68;
+        color: var(--ink);
+        max-width: 70ch;
       }
 
-      .error {
-        color: #7a1e1e;
-        background: rgba(190, 56, 56, 0.12);
-        border-left: 3px solid rgba(180, 43, 43, 0.65);
-        padding: 0.45rem 0.65rem;
-        border-radius: 0.3rem;
+      .citations {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: grid;
+        gap: var(--space-2);
       }
 
-      .ok {
+      .citation {
+        padding: 0.55rem 0.7rem;
+        border-radius: 0.55rem;
+        border: 1px solid rgba(164, 176, 196, 0.22);
+        background: rgba(29, 36, 46, 0.68);
+        color: var(--ink);
+        font-family: "IBM Plex Mono", "JetBrains Mono", monospace;
+        font-size: 0.88rem;
+      }
+
+      .citation-id {
+        color: var(--accent);
+        margin-right: 0.3rem;
+      }
+
+      .citation-page {
+        color: var(--ink-soft);
+      }
+
+      .status.error {
+        color: var(--danger);
+      }
+
+      .status.ok {
         color: var(--success);
+      }
+
+      main.is-loading button {
+        background: linear-gradient(150deg, rgba(92, 109, 124, 0.3), rgba(24, 31, 40, 0.85));
+      }
+
+      main.is-ready #result {
+        animation: reveal 260ms ease-out both;
+      }
+
+      @keyframes rise-in {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @keyframes reveal {
+        from {
+          opacity: 0;
+          transform: translateY(6px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation: none !important;
+          transition: none !important;
+        }
       }
 
       @media (max-width: 640px) {
         body {
-          padding: 1rem 0.7rem;
+          padding: var(--space-4) 0.75rem;
         }
 
         main {
-          border-radius: 0.8rem;
-          padding: 1rem;
+          border-radius: 1rem;
+          gap: var(--space-5);
+          padding: var(--space-4);
+        }
+
+        .panel {
+          padding: var(--space-4);
+        }
+
+        .actions {
+          align-items: stretch;
+        }
+
+        button {
+          width: 100%;
+          justify-content: center;
         }
       }
     </style>
   </head>
   <body>
-    <main>
-      <h1>MakeWorkInc PoliBot</h1>
-      <p class="lead">You question, answered and cited.</p>
+    <main id="app-shell">
+      <header class="hero">
+        <h1>MakeWorkInc PoliBot</h1>
+        <p class="lead">Ask policy questions in plain language and get concise, citation-backed answers sourced from your indexed documentation.</p>
+      </header>
 
-      <form id="chat-form">
-        <label for="question">What would you like to know?</label>
-        <textarea id="question" name="question" required placeholder="What does the PTO policy say about carryover?"></textarea>
+      <section class="panel">
+        <form id="chat-form">
+          <label for="question">What would you like to know?</label>
+          <textarea id="question" name="question" required placeholder="What does the PTO policy say about carryover?"></textarea>
 
-        <div class="actions">
-          <button id="submit" type="submit">Ask question</button>
-          <span id="status" class="status" role="status" aria-live="polite"></span>
+          <div class="actions">
+            <button id="submit" type="submit">Query policy</button>
+            <span id="status" class="status" role="status" aria-live="polite"></span>
+          </div>
+        </form>
+      </section>
+
+      <section id="result" class="panel" hidden>
+        <div class="result-block">
+          <h2>Answer</h2>
+          <div id="answer" class="answer"></div>
         </div>
-      </form>
 
-      <section id="result" hidden>
-        <h2>Answer</h2>
-        <div id="answer" class="answer"></div>
-
-        <h2>Citations</h2>
-        <ul id="citations"></ul>
+        <div class="result-block">
+          <h2>Citations</h2>
+          <ul id="citations" class="citations"></ul>
+        </div>
       </section>
     </main>
 
@@ -199,6 +351,14 @@
       const resultEl = document.getElementById("result");
       const answerEl = document.getElementById("answer");
       const citationsEl = document.getElementById("citations");
+      const shellEl = document.getElementById("app-shell");
+
+      function setViewState(state) {
+        shellEl.classList.remove("is-loading", "is-ready", "is-error");
+        if (state) {
+          shellEl.classList.add(state);
+        }
+      }
 
       function setStatus(message, kind) {
         statusEl.textContent = message;
@@ -213,6 +373,7 @@
 
         if (!citations || citations.length === 0) {
           const item = document.createElement("li");
+          item.className = "citation";
           item.textContent = "No citations returned.";
           citationsEl.appendChild(item);
           return;
@@ -220,8 +381,23 @@
 
         for (const citation of citations) {
           const item = document.createElement("li");
-          const pageText = citation.page !== null && citation.page !== undefined ? ` (page ${citation.page})` : "";
-          item.textContent = `[${citation.id}] ${citation.source}${pageText}`;
+          const pageText = citation.page !== null && citation.page !== undefined ? ` page ${citation.page}` : "page n/a";
+          item.className = "citation";
+
+          const idEl = document.createElement("span");
+          idEl.className = "citation-id";
+          idEl.textContent = `[${citation.id}]`;
+
+          const sourceEl = document.createElement("span");
+          sourceEl.textContent = ` ${citation.source} `;
+
+          const pageEl = document.createElement("span");
+          pageEl.className = "citation-page";
+          pageEl.textContent = pageText;
+
+          item.appendChild(idEl);
+          item.appendChild(sourceEl);
+          item.appendChild(pageEl);
           citationsEl.appendChild(item);
         }
       }
@@ -232,12 +408,14 @@
         const question = questionEl.value.trim();
         if (!question) {
           setStatus("Please enter a question.", "error");
+          setViewState("is-error");
           return;
         }
 
         submitEl.disabled = true;
         resultEl.hidden = true;
-        setStatus("Thinking...", null);
+        setStatus("Querying policy index...", null);
+        setViewState("is-loading");
 
         try {
           const response = await fetch("/api/chat", {
@@ -258,9 +436,11 @@
           renderCitations(payload.citations || []);
           resultEl.hidden = false;
           setStatus("Answer ready.", "ok");
+          setViewState("is-ready");
         } catch (error) {
           const message = error instanceof Error ? error.message : "Request failed.";
           setStatus(message, "error");
+          setViewState("is-error");
         } finally {
           submitEl.disabled = false;
         }
