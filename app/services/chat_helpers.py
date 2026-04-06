@@ -9,19 +9,23 @@ You are a policy question-answering assistant.
 
 You must answer using only the provided context.
 Do not use outside knowledge.
-Do not guess, infer, or invent policy details that are not explicitly supported by the context.
+Do not guess, infer, generalize, or invent policy details that are not explicitly supported by the context.
 
-Requirements:
-1. Give a concise, accurate answer to the user's question.
-2. If the context is insufficient, say that the answer is not available in the provided documents.
-3. If the provided context appears to conflict, briefly note that the documents conflict.
-4. Add citation markers to every factual sentence using the provided context ids, formatted as [n].
+Priority rules:
+1. Prefer direct, specific policy language over broad summaries.
+2. If a local clause, exception, condition, or qualifier is present, include it rather than replacing it with a general statement.
+3. Do not combine information across different documents unless the question explicitly requires cross-document comparison or synthesis.
+4. Do not claim that the policy does not mention, does not specify, or does not explicitly state something unless that conclusion is clearly supported by the provided context.
+5. If the context is insufficient to answer any part of the question, say so plainly.
+6. If the provided context appears to conflict, briefly note the conflict.
+7. Add citation markers to every factual sentence using the provided context ids, formatted as [n].
 
 Output rules:
 - Write in plain language.
 - Keep the answer short unless the question clearly requires a list.
 - Use only citation ids that appear in the context.
-- Do not include a bibliography or source list in the answer.
+- Do not include a bibliography or source list.
+- Do not cite a sentence unless the cited passage directly supports that sentence.
 """.strip()
 
 USER_PROMPT_TEMPLATE = """Answer the question using only the context below.
@@ -32,11 +36,24 @@ Question:
 Context:
 {context}
 
-Return only the answer.
-Every factual sentence must include one or more citation markers like [1] or [2][3].
-Use only citation ids from the context above."""
+Before writing the final answer, identify:
+- the exact facts needed to answer the question
+- which citation ids support each fact
 
-CITATION_RETRY_PROMPT_TEMPLATE = """Answer the question using only the context below.
+Then write the final answer using only those supported facts.
+
+Rules:
+- Answer every part of the question.
+- Prefer specific clauses over general summaries.
+- Do not add unsupported details.
+- Do not merge information across documents unless the question explicitly requires it.
+- If the context is insufficient for any part, say that plainly.
+- Every factual sentence must include one or more citation markers like [1] or [2][3].
+- Use only citation ids from the context above.
+
+Return only the final answer."""
+
+CITATION_RETRY_PROMPT_TEMPLATE = """Rewrite the answer using only the provided context.
 
 Question:
 {question}
@@ -44,12 +61,19 @@ Question:
 Context:
 {context}
 
-Draft answer missing citations:
+Draft answer:
 {draft_answer}
 
-Rewrite the answer and include citation markers like [1] in every factual sentence.
-Return only the answer.
-Use only citation ids from the context above."""
+Instructions:
+- Preserve only claims that are explicitly supported by the context.
+- Remove any unsupported, generalized, or cross-document claims.
+- If any part of the draft answer is not supported by the context, replace it with a supported statement or say that the answer is not available in the provided documents.
+- Prefer specific policy language over broad summaries.
+- Every factual sentence must include one or more citation markers like [1] or [2][3].
+- Use only citation ids from the context above.
+- Do not include a bibliography or source list.
+
+Return only the rewritten answer."""
 
 
 def build_citations(documents: list[Document]) -> list[dict[str, int | str | None]]:

@@ -13,6 +13,15 @@ def chunk_documents(
         chunk_size=chunk_size,
         chunk_overlap=chunk_overlap,
         length_function=len,
+        separators=[
+            "\n\n",
+            "\n• ",
+            "\n- ",
+            "\n",
+            ". ",
+            " ",
+            "",
+        ],
     )
 
     chunks: list[Document] = []

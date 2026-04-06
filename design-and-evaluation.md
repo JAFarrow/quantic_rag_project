@@ -1,3 +1,7 @@
+# Evaluation
+
+## Initial Run
+
 | Question | Model Answer | Groundedness (Y/N) | Citation Accuracy (Y/N) | Latency | Notes |
 | --- | --- | --- | --- | --- | --- |
 | What categories of employee personal data are collected by MakeWorkInc, and which of these categories are explicitly stated to require elevated confidentiality safeguards? | MakeWorkInc collects identification data, employment-related information, benefits and financial data, IT and usage data, and health and leave information. It then states no category is explicitly marked for elevated confidentiality safeguards, and cites general safeguards/confidentiality language. | N | N | 8.07s | Should identify Health and Leave Information as explicitly requiring elevated confidentiality safeguards. |
@@ -27,3 +31,42 @@
 - Citation Accuracy: 80.00% (16/20)
 - Latency p50: 6.04s
 - Latency p95: 7.47s
+
+## Enhancements Pass
+
+| Question | Model Answer | Groundedness (Y/N) | Citation Accuracy (Y/N) | Latency | Notes |
+| --- | --- | --- | --- | --- | --- |
+| What categories of employee personal data are collected by MakeWorkInc, and which of these categories are explicitly stated to require elevated confidentiality safeguards? | Identifies four categories (Identification, Employment-Related, Benefits and Financial, IT and Usage) and says no category is explicitly marked for elevated confidentiality safeguards. | N | N | 6.15s | Misses `Health and Leave Information` and incorrectly says no category is explicitly marked for elevated confidentiality safeguards. |
+| What legal bases does MakeWorkInc rely on for processing employee data, and under what condition is consent explicitly discouraged? | Says processing is for employment/legal/compliance purposes but claims legal bases and consent caveat are not explicitly listed. | N | N | 5.26s | Legal bases and consent caveat are explicitly listed in Data Protection Policy p.3, but the answer says they are not explicit. |
+| With whom may employee personal data be shared, and what explicit limitation is placed on how that data is commercially used? | Lists payroll/benefits/vendors/legal/government recipients, adds applicants/current/former employees/contractors as sharing recipients, and says data is not sold. | Y | Y | 5.01s | |
+| What steps must MakeWorkInc take in the event of a data breach, and under what condition is notification required? | Says company must investigate, contain/remediate, coordinate with legal/regulators, and notify when legally required. | Y | Y | 5.13s |  |
+| Under what conditions does MakeWorkInc claim ownership of employee-created work product, and what additional actions may employees be required to take to formalize that ownership? | Says ownership covers work within scope of employment (including related inventions/work product), with assignment language and possible additional documentation/agreements. | Y | Y | 4.08s |  |
+| How does the policy treat pre-existing intellectual property, and what assumption is made if such IP is not properly disclosed? | Says pre-existing IP must be disclosed at/before hire to exclude it; otherwise relevant IP may be presumed company property. | Y | Y | 4.61s |  |
+| What restrictions are placed on the use of company resources for personal or third-party projects, and what consequences may result from violations? | Says company resources/confidential info cannot be used for personal or third-party work without approval; violations may lead to discipline up to termination/legal consequences. | Y | Y | 5.22s |  |
+| What obligations do employees have when handling third-party confidential information, and how do these obligations compare to those for company confidential information? | Says third-party data must follow contractual restrictions and equal-or-greater-care handling; compares with company confidentiality obligations and post-employment survival. | Y | Y | 6.56s |  |
+| What are the stages of MakeWorkInc’s performance cycle, and how do responsibilities differ between the goal-setting phase and ongoing feedback phase? | Describes annual cycle (goal setting, mid-year check-in, year-end review), with manager/employee duties in goal setting and regular feedback expectations. | Y | Y | 4.62s |  |
+| What factors are explicitly excluded from influencing performance ratings, and how are ratings validated across the organization? | States ratings should not be based on effort/tenure/personal rapport and are validated through cross-functional calibration with potential adjustments. | Y | Y | 4.98s |  |
+| How does PTO accrual vary by years of service, and what mechanism limits excessive accrual over time? | States 15/20/25-day accrual tiers by tenure and a 1.5x accrual cap that pauses accrual until balance drops below cap. | Y | Y | 5.15s |  |
+| Under what conditions may employees use PTO that has not yet been accrued, and what approvals are required? | Says unaccrued PTO requires written manager and People Operations approval, with standard HRIS advance request and manager review expectations. | Y | Y | 4.71s |  |
+| What factors influence PTO approval decisions, and how do blackout periods alter standard scheduling expectations? | Says approval depends on business needs, coverage, operational impact; blackout periods can restrict standard approvals during critical windows. | Y | Y | 5.53s |  |
+| How is unused PTO handled at the time of employee separation, and how does this depend on local legal requirements? | Says treatment depends on local law: required payout where mandated; otherwise company discretion per policy/agreements. | Y | Y | 4.10s |  |
+| What factors determine eligibility for remote or hybrid work, and what baseline conditions must an employee meet before being considered? | Lists role/collaboration/security/team/performance/regulatory factors and baseline conditions (intro period complete, good standing, written request, dual approval). | Y | Y | 5.20s |  |
+| What steps are required to obtain approval for a remote work arrangement, and how do managerial and People Operations responsibilities differ in that process? | Says employee submits written request, manager reviews business/operational fit, People Operations reviews compliance, and both provide written approval. | Y | Y | 6.68s |  |
+| What restrictions are placed on employee work location, and what consequences may arise from unauthorized relocation? | Says work location must be approved jurisdiction, relocation requires prior written approval, and unauthorized relocation may lead to discipline up to termination. | Y | Y | 4.30s |  |
+| How do wage and hour requirements apply to remote employees, and what specific behaviors are restricted to ensure compliance? | Says remote work does not change wage-and-hour obligations; non-exempt staff must track all time and avoid off-the-clock work; managers must enforce compliance. | Y | Y | 5.43s |  |
+| How can performance issues impact an employee’s remote work arrangement, and what processes govern addressing underperformance versus modifying work arrangements? | Says performance issues can trigger remote arrangement modification/revocation; underperformance follows performance policy while arrangement changes follow remote policy. | Y | Y | 6.15s |  |
+| How do PTO usage rules interact with timekeeping and wage compliance requirements, particularly for non-exempt employees? | Says PTO usage follows approval/increment rules and integrates with wage/timekeeping obligations, including accurate non-exempt time records and no off-the-clock work. | Y | Y | 5.13s |  |
+
+### Aggregate Metrics
+
+- Groundedness: 90.00% (18/20)
+- Citation Accuracy: 90.00% (18/20)
+- Latency p50: 5.14s
+- Latency p95: 6.68s
+
+### Delta vs Initial Run
+
+- Groundedness: +10.00 pp (from 80.00% to 90.00%)
+- Citation Accuracy: +10.00 pp (from 80.00% to 90.00%)
+- Latency p50: -0.90s (from 6.04s to 5.14s)
+- Latency p95: -0.79s (from 7.47s to 6.68s)
