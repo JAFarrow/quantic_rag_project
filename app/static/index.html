@@ -1,0 +1,270 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Quantic RAG Chat</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg-top: #f8f3e7;
+        --bg-bottom: #d5e6f0;
+        --panel: rgba(255, 255, 255, 0.78);
+        --panel-border: rgba(58, 76, 103, 0.25);
+        --ink: #13293d;
+        --muted: #39556e;
+        --accent: #b2522d;
+        --accent-strong: #913d1e;
+        --success: #1f6f43;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background:
+          radial-gradient(circle at 15% 10%, rgba(255, 220, 175, 0.65), transparent 40%),
+          radial-gradient(circle at 85% 90%, rgba(158, 205, 235, 0.6), transparent 45%),
+          linear-gradient(160deg, var(--bg-top), var(--bg-bottom));
+        color: var(--ink);
+        font-family: "IBM Plex Sans", "Segoe UI", Tahoma, sans-serif;
+        display: grid;
+        place-items: center;
+        padding: 2rem 1rem;
+      }
+
+      main {
+        width: min(56rem, 100%);
+        background: var(--panel);
+        border: 1px solid var(--panel-border);
+        border-radius: 1rem;
+        backdrop-filter: blur(4px);
+        box-shadow: 0 22px 45px rgba(20, 33, 52, 0.2);
+        padding: clamp(1rem, 2vw + 0.5rem, 2rem);
+      }
+
+      h1 {
+        margin: 0;
+        font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Palatino, serif;
+        font-size: clamp(1.8rem, 2.2vw + 1rem, 2.6rem);
+      }
+
+      p.lead {
+        margin: 0.55rem 0 1.25rem;
+        color: var(--muted);
+        line-height: 1.5;
+      }
+
+      form {
+        display: grid;
+        gap: 0.75rem;
+      }
+
+      label {
+        font-weight: 600;
+      }
+
+      textarea {
+        width: 100%;
+        min-height: 7.5rem;
+        resize: vertical;
+        border: 1px solid rgba(35, 56, 78, 0.25);
+        border-radius: 0.7rem;
+        padding: 0.85rem 0.95rem;
+        font: inherit;
+        color: var(--ink);
+        background: rgba(255, 255, 255, 0.92);
+        transition: border-color 160ms ease;
+      }
+
+      textarea:focus {
+        outline: none;
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px rgba(178, 82, 45, 0.18);
+      }
+
+      .actions {
+        display: flex;
+        align-items: center;
+        gap: 0.85rem;
+        flex-wrap: wrap;
+      }
+
+      button {
+        border: 0;
+        border-radius: 999px;
+        padding: 0.7rem 1.25rem;
+        background: linear-gradient(140deg, var(--accent), var(--accent-strong));
+        color: #fff;
+        font-weight: 600;
+        font: inherit;
+        cursor: pointer;
+      }
+
+      button:disabled {
+        opacity: 0.65;
+        cursor: wait;
+      }
+
+      .status {
+        color: var(--muted);
+        min-height: 1.25rem;
+      }
+
+      section#result {
+        margin-top: 1.35rem;
+        border-top: 1px solid rgba(35, 56, 78, 0.2);
+        padding-top: 1.2rem;
+      }
+
+      section[hidden] {
+        display: none;
+      }
+
+      .answer {
+        line-height: 1.65;
+        white-space: pre-wrap;
+      }
+
+      h2 {
+        margin: 0.15rem 0 0.5rem;
+        font-size: 1.05rem;
+      }
+
+      ul {
+        margin: 0;
+        padding-left: 1.1rem;
+      }
+
+      li {
+        margin: 0.35rem 0;
+      }
+
+      .error {
+        color: #7a1e1e;
+        background: rgba(190, 56, 56, 0.12);
+        border-left: 3px solid rgba(180, 43, 43, 0.65);
+        padding: 0.45rem 0.65rem;
+        border-radius: 0.3rem;
+      }
+
+      .ok {
+        color: var(--success);
+      }
+
+      @media (max-width: 640px) {
+        body {
+          padding: 1rem 0.7rem;
+        }
+
+        main {
+          border-radius: 0.8rem;
+          padding: 1rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>MakeWorkInc PoliBot</h1>
+      <p class="lead">You question, answered and cited.</p>
+
+      <form id="chat-form">
+        <label for="question">What would you like to know?</label>
+        <textarea id="question" name="question" required placeholder="What does the PTO policy say about carryover?"></textarea>
+
+        <div class="actions">
+          <button id="submit" type="submit">Ask question</button>
+          <span id="status" class="status" role="status" aria-live="polite"></span>
+        </div>
+      </form>
+
+      <section id="result" hidden>
+        <h2>Answer</h2>
+        <div id="answer" class="answer"></div>
+
+        <h2>Citations</h2>
+        <ul id="citations"></ul>
+      </section>
+    </main>
+
+    <script>
+      const form = document.getElementById("chat-form");
+      const questionEl = document.getElementById("question");
+      const submitEl = document.getElementById("submit");
+      const statusEl = document.getElementById("status");
+      const resultEl = document.getElementById("result");
+      const answerEl = document.getElementById("answer");
+      const citationsEl = document.getElementById("citations");
+
+      function setStatus(message, kind) {
+        statusEl.textContent = message;
+        statusEl.classList.remove("error", "ok");
+        if (kind) {
+          statusEl.classList.add(kind);
+        }
+      }
+
+      function renderCitations(citations) {
+        citationsEl.innerHTML = "";
+
+        if (!citations || citations.length === 0) {
+          const item = document.createElement("li");
+          item.textContent = "No citations returned.";
+          citationsEl.appendChild(item);
+          return;
+        }
+
+        for (const citation of citations) {
+          const item = document.createElement("li");
+          const pageText = citation.page !== null && citation.page !== undefined ? ` (page ${citation.page})` : "";
+          item.textContent = `[${citation.id}] ${citation.source}${pageText}`;
+          citationsEl.appendChild(item);
+        }
+      }
+
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+
+        const question = questionEl.value.trim();
+        if (!question) {
+          setStatus("Please enter a question.", "error");
+          return;
+        }
+
+        submitEl.disabled = true;
+        resultEl.hidden = true;
+        setStatus("Thinking...", null);
+
+        try {
+          const response = await fetch("/api/chat", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ question }),
+          });
+
+          const payload = await response.json();
+          if (!response.ok) {
+            const detail = payload && payload.detail ? payload.detail : "Request failed.";
+            throw new Error(detail);
+          }
+
+          answerEl.textContent = payload.answer || "";
+          renderCitations(payload.citations || []);
+          resultEl.hidden = false;
+          setStatus("Answer ready.", "ok");
+        } catch (error) {
+          const message = error instanceof Error ? error.message : "Request failed.";
+          setStatus(message, "error");
+        } finally {
+          submitEl.disabled = false;
+        }
+      });
+    </script>
+  </body>
+</html>
