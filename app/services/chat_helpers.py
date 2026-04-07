@@ -37,12 +37,6 @@ Question:
 Context:
 {context}
 
-Before writing the final answer, identify:
-- the exact facts needed to answer the question
-- which citation ids support each fact
-
-Then write the final answer using only those supported facts.
-
 Rules:
 - Answer every part of the question.
 - Prefer specific clauses over general summaries.
@@ -52,6 +46,7 @@ Rules:
 - Every supported factual sentence should include one or more citation markers like [1] or [2][3].
 - If the context is insufficient, return exactly: "I couldn't find enough relevant information in the provided policy documents to answer that question." and do not include citation markers.
 - Use only citation ids from the context above.
+- Do not include analysis, planning text, chain-of-thought, or meta-instructions in the output.
 
 Return only the final answer."""
 
