@@ -45,6 +45,7 @@ Optional tuning variables:
 ```bash
 export OPENAI_CHAT_MODEL="gpt-5.4-mini"
 export OPENAI_EMBEDDING_MODEL="text-embedding-3-small"
+export OPENAI_MAX_OUTPUT_TOKENS="600"
 export CHAT_TOP_K="4"
 export CHAT_MIN_SCORE="0.0"
 ```

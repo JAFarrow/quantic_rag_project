@@ -15,7 +15,7 @@
 ## Grounding and citation strategy
 
 - **Citation-first prompting:** Prompts require every factual sentence to include citation markers (`[n]`) from retrieved context only. This decision directly supports groundedness and traceability in evaluation.
-- **Second-pass citation retry:** If the first answer lacks citation markers, a retry prompt rewrites the draft with stricter constraints. This improves citation compliance without forcing a full request failure.
+- **Single-pass answer generation:** Answers are generated in one pass from retrieved context without rewrite retries, which keeps behavior simpler and easier to reason about during evaluation.
 - **Citation filtering before response:** Only citations referenced in the final answer are returned, which keeps responses compact and prevents exposing unused sources.
 
 ## Ingestion and data lifecycle

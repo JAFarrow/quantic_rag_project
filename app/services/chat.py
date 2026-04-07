@@ -8,12 +8,9 @@ from langchain_pinecone import PineconeVectorStore
 
 from app.config import ChatSettings
 from app.services.chat_helpers import (
-    CITATION_RETRY_PROMPT_TEMPLATE,
     SYSTEM_PROMPT,
     USER_PROMPT_TEMPLATE,
     build_chain_payload,
-    build_retry_payload,
-    extract_citation_ids,
     filter_citations_by_answer,
     serialize_citations,
 )
@@ -44,6 +41,7 @@ def _build_rag_chain(settings: ChatSettings):
         model=settings.openai_chat_model,
         api_key=settings.openai_api_key,
         temperature=0,
+        max_tokens=settings.openai_max_output_tokens,
     )
 
     answer_prompt = ChatPromptTemplate.from_messages(
@@ -69,47 +67,31 @@ def _build_rag_chain(settings: ChatSettings):
         )
     )
 
-    citation_retry_prompt = ChatPromptTemplate.from_messages(
-        [
-            ("system", SYSTEM_PROMPT),
-            ("human", CITATION_RETRY_PROMPT_TEMPLATE),
-        ]
-    )
-
-    citation_retry_chain = (
-        RunnableLambda(build_retry_payload)
-        | citation_retry_prompt
-        | llm
-        | StrOutputParser()
-    )
-
-    return rag_chain, citation_retry_chain
+    return rag_chain
 
 
 def answer_question(
     question: str,
     settings: ChatSettings,
 ) -> tuple[str, list[dict[str, int | str | None]]]:
-    rag_chain, citation_retry_chain = _build_rag_chain(settings)
+    rag_chain = _build_rag_chain(settings)
+    insufficient_context_message = (
+        "I couldn't find enough relevant information in the provided policy documents to answer that question."
+    )
 
     chain_result = rag_chain.invoke(question)
     citations = list(chain_result.get("citations") or [])
     answer = str(chain_result.get("answer") or "").strip()
 
     if not citations:
-        return (
-            "I couldn't find enough relevant information in the provided policy documents to answer that question.",
-            [],
-        )
+        return insufficient_context_message, []
 
-    if citations and not extract_citation_ids(answer):
-        answer = citation_retry_chain.invoke(
-            {
-                "question": question,
-                "context": str(chain_result.get("context") or ""),
-                "draft_answer": answer,
-            }
-        )
+    lowered_answer = answer.lower()
+    if (
+        "couldn't find enough relevant information" in lowered_answer
+        or "not available in the provided documents" in lowered_answer
+    ):
+        return insufficient_context_message, []
 
     cited_chunks = filter_citations_by_answer(answer, citations)
     serialized_citations = serialize_citations(cited_chunks)

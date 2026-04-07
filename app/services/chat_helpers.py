@@ -18,7 +18,8 @@ Priority rules:
 4. Do not claim that the policy does not mention, does not specify, or does not explicitly state something unless that conclusion is clearly supported by the provided context.
 5. If the context is insufficient to answer any part of the question, say so plainly.
 6. If the provided context appears to conflict, briefly note the conflict.
-7. Add citation markers to every factual sentence using the provided context ids, formatted as [n].
+7. Add citation markers to factual statements that are supported by the provided context ids, formatted as [n].
+8. If the context is insufficient to answer the question, return this exact sentence with no citation markers: "I couldn't find enough relevant information in the provided policy documents to answer that question."
 
 Output rules:
 - Write in plain language.
@@ -48,33 +49,11 @@ Rules:
 - Do not add unsupported details.
 - Do not merge information across documents unless the question explicitly requires it.
 - If the context is insufficient for any part, say that plainly.
-- Every factual sentence must include one or more citation markers like [1] or [2][3].
+- Every supported factual sentence should include one or more citation markers like [1] or [2][3].
+- If the context is insufficient, return exactly: "I couldn't find enough relevant information in the provided policy documents to answer that question." and do not include citation markers.
 - Use only citation ids from the context above.
 
 Return only the final answer."""
-
-CITATION_RETRY_PROMPT_TEMPLATE = """Rewrite the answer using only the provided context.
-
-Question:
-{question}
-
-Context:
-{context}
-
-Draft answer:
-{draft_answer}
-
-Instructions:
-- Preserve only claims that are explicitly supported by the context.
-- Remove any unsupported, generalized, or cross-document claims.
-- If any part of the draft answer is not supported by the context, replace it with a supported statement or say that the answer is not available in the provided documents.
-- Prefer specific policy language over broad summaries.
-- Every factual sentence must include one or more citation markers like [1] or [2][3].
-- Use only citation ids from the context above.
-- Do not include a bibliography or source list.
-
-Return only the rewritten answer."""
-
 
 def build_citations(documents: list[Document]) -> list[dict[str, int | str | None]]:
     citations: list[dict[str, int | str | None]] = []
@@ -124,23 +103,11 @@ def build_chain_payload(inputs: dict[str, object]) -> dict[str, object]:
     }
 
 
-def build_retry_payload(inputs: dict[str, object]) -> dict[str, object]:
-    return {
-        "question": str(inputs.get("question") or "").strip(),
-        "context": str(inputs.get("context") or "").strip(),
-        "draft_answer": str(inputs.get("draft_answer") or "").strip(),
-    }
-
-
-def extract_citation_ids(answer: str) -> set[int]:
-    return {int(match) for match in re.findall(r"\[(\d+)\]", answer)}
-
-
 def filter_citations_by_answer(
     answer: str,
     citations: list[dict[str, int | str | None]],
 ) -> list[dict[str, int | str | None]]:
-    used_ids = extract_citation_ids(answer)
+    used_ids = {int(match) for match in re.findall(r"\[(\d+)\]", answer)}
     if not used_ids:
         return []
 

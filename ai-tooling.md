@@ -6,7 +6,7 @@ AI tools were utilized across the stack, mostly in the form of ChatGPT and OpenC
 
 Reasoned over the project spec alongside ChatGPT before technical implementation as to potential risks and tradeoffs with the initial tech stack I had in mind. 
 
-Utilized ChatGPT to summarize and advice on Pinecone integration. 
+Utilized ChatGPT to summarize and advise on Pinecone integration. 
 
 - **What went well**: Fast iteration on design tradeoffs and clearer up-front framing of Pinecone fit, cost, and complexity before writing code.
 - **What didn't**: Advice quality was highly prompt-dependent and occasionally generic, so recommendations still needed manual validation against project constraints.

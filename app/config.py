@@ -41,6 +41,7 @@ class ChatSettings:
     pinecone_namespace: str
     openai_chat_model: str
     openai_embedding_model: str
+    openai_max_output_tokens: int
     chat_top_k: int
     chat_min_score: float
 
@@ -53,8 +54,9 @@ class ChatSettings:
             pinecone_namespace=os.getenv("PINECONE_NAMESPACE", "dev"),
             openai_chat_model=os.getenv("OPENAI_CHAT_MODEL", "gpt-5.4-mini"),
             openai_embedding_model=os.getenv("OPENAI_EMBEDDING_MODEL", "text-embedding-3-small"),
-            chat_top_k=_read_int("CHAT_TOP_K", 10),
-            chat_min_score=_read_float("CHAT_MIN_SCORE", 0.3),
+            openai_max_output_tokens=_read_int("OPENAI_MAX_OUTPUT_TOKENS", 600),
+            chat_top_k=_read_int("CHAT_TOP_K", 8),
+            chat_min_score=_read_float("CHAT_MIN_SCORE", 0.4),
         )
 
 
