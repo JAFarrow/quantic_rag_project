@@ -1,3 +1,29 @@
+# Design and Architecture Decisions
+
+## System shape
+
+- **Single service deployment (FastAPI + static web UI):** The app serves both API routes and the lightweight chat frontend from one codebase and process (`app.main`, `app.web`), which keeps deployment and operations simple for Render and avoids coordinating separate frontend/backend releases.
+- **API-first interface with clear route boundaries:** Core functionality is exposed under `/api` (`/api/chat`, `/api/health`), while `/` serves the UI. This separation keeps programmatic usage and browser usage aligned without mixing concerns.
+
+## RAG design choices
+
+- **Retriever + generation pipeline using LangChain LCEL:** The chat path composes retrieval, context construction, prompting, and output parsing as a runnable chain. This was chosen for readability and modularity so each stage can be tuned independently.
+- **Pinecone vector store for document retrieval:** Policy chunks are embedded and indexed in Pinecone to support low-latency semantic search and easy namespace isolation across environments.
+- **OpenAI embeddings and chat model:** `text-embedding-3-small` and `gpt-5.4-mini` are used by default to balance retrieval quality, answer quality, and cost/latency for policy Q&A workloads.
+- **Similarity score threshold retrieval (`k` + min score):** Retrieval is constrained with `CHAT_TOP_K` and `CHAT_MIN_SCORE` to reduce weak matches and lower hallucination risk from irrelevant context.
+
+## Grounding and citation strategy
+
+- **Citation-first prompting:** Prompts require every factual sentence to include citation markers (`[n]`) from retrieved context only. This decision directly supports groundedness and traceability in evaluation.
+- **Second-pass citation retry:** If the first answer lacks citation markers, a retry prompt rewrites the draft with stricter constraints. This improves citation compliance without forcing a full request failure.
+- **Citation filtering before response:** Only citations referenced in the final answer are returned, which keeps responses compact and prevents exposing unused sources.
+
+## Ingestion and data lifecycle
+
+- **PDF-focused ingestion pipeline:** Input documents are discovered from `data/`, parsed via `pypdf`/LangChain loaders, chunked with `RecursiveCharacterTextSplitter`, embedded, then upserted.
+- **Namespace wipe before upsert:** Ingestion clears the target Pinecone namespace first to avoid stale vectors and keep evaluation runs reproducible against the current document set.
+- **Environment-driven configuration:** API and ingestion settings are loaded from environment variables (with `.env` support), making local/dev/prod configuration predictable without code changes.
+
 # Evaluation
 
 ## Initial Run
@@ -33,6 +59,8 @@
 - Latency p95: 7.47s
 
 ## Enhancements Pass
+
+To improve citation accuracy, I made two targeted updates before re-running the benchmark: I reduced chunk size and chunk overlap, and tweaked the text splitter separators to split on better policy boundaries, then tightened chatbot prompt instructions to enforce citation-grounded claims.
 
 | Question | Model Answer | Groundedness (Y/N) | Citation Accuracy (Y/N) | Latency | Notes |
 | --- | --- | --- | --- | --- | --- |

@@ -1,6 +1,10 @@
 # quantic_rag_project
 
-LLM-powered chatbot foundation with room for a policy-aware RAG stack.
+Production-style FastAPI RAG chatbot with a deployed web UI, citation-grounded answers from policy documents, and a Pinecone-backed ingestion pipeline.
+
+## Deployed app
+
+https://quantic-rag-project.onrender.com/
 
 ## Getting started
 
